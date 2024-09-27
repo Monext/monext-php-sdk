@@ -1,8 +1,8 @@
-[![Latest Stable Version](https://poser.pugx.org/monext/payline-sdk/v/stable)](https://packagist.org/packages/monext/payline-sdk)
-[![Total Downloads](https://poser.pugx.org/monext/payline-sdk/downloads)](https://packagist.org/packages/monext/payline-sdk)
-[![License](https://poser.pugx.org/monext/payline-sdk/license)](https://packagist.org/packages/monext/payline-sdk)
+[![Latest Stable Version](https://poser.pugx.org/monext/monext-php/v/stable)](https://packagist.org/packages/monext/monext-php)
+[![Total Downloads](https://poser.pugx.org/monext/monext-php/downloads)](https://packagist.org/packages/monext/monext-php)
+[![License](https://poser.pugx.org/monext/monext-php/license)](https://packagist.org/packages/monext/monext-php)
 
-PaylineSDK - Payline library for PHP
+Monext PHP - Monext library for PHP
 ====================================
 
 Installation
@@ -10,17 +10,17 @@ Installation
 
 Use composer to install the monext package
 ```shell
-composer require monext/payline-sdk
+composer require monext/monext-php
 ````
 
 To update the package
 ```shell
-composer require monext/payline-sdk
+composer require monext/monext-php
 ````
 
 In order to install a specific version x.xx you can execute
 ```shell
-composer require monext/payline-sdk:x.xx
+composer require monext/monext-php:x.xx
 ````
 
 Usage
@@ -32,7 +32,7 @@ Docs
 -----
 
 More information available on
-- https://docs.payline.com/display/DT/PHP+SDK
+- https://docs.monext.fr/display/DT/PHP+SDK
 - http://support.payline.com
 
 Prerequisites
@@ -47,9 +47,9 @@ In order to make http call for failover, ext-curl is mark has required, it can b
 Author
 ------
 
-Payline support - <support@payline.com>
+Monext support - <support@payline.com>
 
 License
 -------
 
-Payline is licensed under the LGPL-3.0+ License - see the LICENSE file for details
+Monext PHP is licensed under the LGPL-3.0+ License - see the LICENSE file for details

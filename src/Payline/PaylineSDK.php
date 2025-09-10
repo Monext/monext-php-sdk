@@ -15,29 +15,17 @@ use Monolog\Handler\StreamHandler;
 use SoapClient;
 use SoapVar;
 
-use Payline\Objects\Buyer;
-use Payline\Objects\Buyer\BillingAddress;
 use Payline\Objects\Buyer\MerchantAuthentication;
-use Payline\Objects\Buyer\ShippingAdress;
 use Payline\Objects\Card;
 use Payline\Objects\Card\PaymentData;
-use Payline\Objects\Owner;
-use Payline\Objects\Owner\BillingAddress as AddressOwner;
-use Payline\Objects\ThreeDSInfo;
-use Payline\Objects\ThreeDSInfo\Browser;
-use Payline\Objects\ThreeDSInfo\Sdk;
-use Payline\Objects\Authentication3DSecure;
+use Payline\Objects\Address;
 use Payline\Objects\Authorization;
-use Payline\Objects\BankAccountData;
 use Payline\Objects\BillingRecordForUpdate;
 use Payline\Objects\Cheque;
 use Payline\Objects\Creditor;
-use Payline\Objects\Order;
 use Payline\Objects\OrderDetail;
-use Payline\Objects\Payment;
 use Payline\Objects\PrivateData;
 use Payline\Objects\Recurring;
-use Payline\Objects\SubMerchant;
 use Payline\Objects\Wallet;
 
 class PaylineSDK
@@ -47,7 +35,7 @@ class PaylineSDK
      * Payline release corresponding to this version of the package
      * @see https://docs.payline.com/display/DT/API+version+history
      */
-    const SDK_RELEASE = 'PHP SDK 4.77';
+    const SDK_RELEASE = 'PHP SDK 25.9';
 
     /**
      * development environment flag
@@ -264,7 +252,7 @@ class PaylineSDK
 
     /**
      * monext endpoint webservice url
-     * @var string
+     * @var string|false
      */
     protected $webServicesEndpoint;
     
@@ -274,7 +262,7 @@ class PaylineSDK
     protected $logger;
 
     /**
-     * @var $loggerPath
+     * @var string|null
      */
     protected $loggerPath;
 
@@ -391,11 +379,11 @@ class PaylineSDK
      * @param string $pathLog
      *            path to your custom log folder, must end by directory separator. If null, default logs folder is used. Default : null
      * @param int $logLevel
-     *            \Monolog\Logger log level. Default : Logger::INFO
+     *            log level. Default : \Monolog\Logger::INFO
      * @param Logger $externalLogger
      *            \Monolog\Logger instance, used by PaylineSDK but external to it
      */
-    public function __construct($merchant_id, $access_key, $proxy_host, $proxy_port, $proxy_login, $proxy_password, $environment, $pathLog = null, $logLevel = Logger::INFO, $externalLogger = null, $defaultTimezone = "Europe/Paris")
+    public function __construct($merchant_id, $access_key, $proxy_host, $proxy_port, $proxy_login, $proxy_password, $environment, $pathLog = null, $logLevel = \Monolog\Logger::INFO, $externalLogger = null, $defaultTimezone = "Europe/Paris")
     {
 
         $this->logLevel = $logLevel;
@@ -419,7 +407,7 @@ class PaylineSDK
         $this->loggerPath = $pathLog . $logfileDate . '.log';
         try {
             if(is_writable($pathLog) || is_writable(dirname($pathLog))) {
-        $this->logger->pushHandler(new StreamHandler($this->loggerPath, $logLevel)); // set default log folder
+                $this->logger->pushHandler(new StreamHandler($this->loggerPath, $logLevel)); // set default log folder
             }
         } catch (\Exception $e) {
             $this->loggerPath = null;
@@ -770,10 +758,10 @@ class PaylineSDK
     /**
      *
      * @param String $nodeName name of a node in a web service response
-     * @param String $parentName name of its parent
+     * @param null|String $parentName name of its parent
      * @return boolean whether $nodeName is child from a list or not
      */
-    protected function isChildFromList($nodeName,$parentName){
+    protected function isChildFromList($nodeName,$parentName=null){
 
         if(array_key_exists($nodeName, $this->parentNode)){
             if(is_null($parentName)) {
@@ -1185,7 +1173,7 @@ class PaylineSDK
             $this->logger->info($Method . 'Response', $logResponse);
 
             if ($this->logLevel == \Monolog\Logger::DEBUG && $this->soapclientOptions['trace'] === true) {
-                foreach ($this->getSoapLastContent(null, false) as $callNum=>$callData) {
+                foreach ($this->getSoapLastContent('', false) as $callNum=>$callData) {
                     foreach ($callData as $callKey => $callValue) {
                         $this->logger->debug($Method . ', Last' . $callKey . ': ' . $callValue);
                     }
@@ -2228,7 +2216,7 @@ class PaylineSDK
      * - Response
      * - ResponseHeaders
      * - HttpHeaders
-     * @param false $beautifuler
+     * @param boolean $beautifuler
      * @return array
      */
     public function getSoapLastContent($key = '', $beautifuler = true)

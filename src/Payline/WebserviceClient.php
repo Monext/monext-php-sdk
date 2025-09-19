@@ -2,12 +2,9 @@
 
 namespace Payline;
 
-use Psr\Log\LogLevel;
 use SoapClient;
-use SoapVar;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
-use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 
 class WebserviceClient
@@ -41,7 +38,7 @@ class WebserviceClient
 
     /**
      * Soap Url used for method with failover ($servicesWithFailover)
-     * @var $sdkFailoverCurrentLocation
+     * @var string
      */
     private $sdkFailoverCurrentLocation;
 
@@ -53,7 +50,7 @@ class WebserviceClient
 
     /**
      * Soap Url to access endpoint directory
-     * @var $endpointsDirectoryLocation
+     * @var string
      */
     private $endpointsDirectoryLocation;
 
@@ -103,7 +100,7 @@ class WebserviceClient
 
     private $sdkWsdl;
 
-    /** @var array $soapOptions  */
+    /** @var null|array $soapOptions  */
     private $soapOptions;
 
     /** @var array $failoverOptions */
@@ -120,12 +117,28 @@ class WebserviceClient
 
     /**
      * WebserviceClient constructor.
-     * @param $wsdl
-     * @param array|null $options
-     * @throws \SoapFault
+     * @param $paylineAPI
+     * @param $sdkDefaultLocation
+     * @param $endpointsDirectoryLocation
+     * @param  $soapOptions
+     * @param  $params
+     * @throws \Exception
      */
-    public function __construct($paylineAPI, $sdkDefaultLocation, $endpointsDirectoryLocation, array $soapOptions = null, array $params = null)
+    public function __construct($paylineAPI,
+                                $sdkDefaultLocation,
+                                $endpointsDirectoryLocation,
+                                $soapOptions = null,
+                                $params = null
+    )
     {
+        if ($soapOptions && !is_array($soapOptions)) {
+            throw new \Exception(__FUNCTION__ . ': Argument $soapOptions must be of type array, '. gettype($soapOptions) .' given');
+        }
+
+        if ($params && !is_array($params)) {
+            throw new \Exception(__FUNCTION__ . ': Argument $params must be of type array, '. gettype($params) .' given');
+        }
+
         $this->setSdkAPI($paylineAPI);
         $this->setSdkDefaultLocation($sdkDefaultLocation);
         $this->setEndpointsDirectoryLocation($endpointsDirectoryLocation);
@@ -157,11 +170,10 @@ class WebserviceClient
      *
      * This method allows for compatibility with common interfaces.
      *
-     * @param mixed             $level   The log level
-     * @param string|Stringable $message The log message
-     * @param mixed[]           $context The log context
-     *
-     * @phpstan-param Level|LevelName|LogLevel::* $level
+     * @param $level
+     * @param $message
+     * @param array $context
+     * @return void
      */
     public function log($level, $message, array $context = []) {
         if($this->logger) {
@@ -526,17 +538,17 @@ class WebserviceClient
     }
 
     /**
-     * @param string $error
-     * @param int $tryNumber
-     * @param int $callDuration
+     * @param $error
+     * @param $nextTryNum
+     * @param $callDuration
      * @return bool
      */
     protected function switchSoapContext($error = '', $nextTryNum=0, $callDuration = 0)
     {
         $location = $this->getFailoverServicesEndpoint($nextTryNum);
         if($location) {
+            $headers = array();
             if ($nextTryNum>0) {
-                $headers = array();
                 $headers['x-failover-cause'] = $error;
                 $headers['x-failover-duration'] = $callDuration;
                 $headers['x-failover-origin'] = $this->sdkFailoverCurrentLocation;
@@ -550,18 +562,18 @@ class WebserviceClient
         return false;
     }
 
-
     /**
-     * @param string $name
-     * @param array $args
+     * @param $method
+     * @param $args
      * @return mixed
-     * @throws \Exception
+     * @throws \SoapFault
      */
     public function __call($method, $args = null)
     {
         $this->tryNum++;
         $callStart = microtime(true);
         $WSRequest = isset($args[0]) ? $args[0] : null;
+        $sdkClient = false;
 
         try {
             $sdkClient = $this->getClientSDK($method, $this->tryNum);
@@ -654,10 +666,9 @@ class WebserviceClient
      * @param $method
      * @param $nextTryNum
      * @param $callStart
-     * @param \SoapFault $fault
+     * @param $errorCode
      * @return bool
      */
-    //protected function switchSoapContextFailoverOnFault($method, $nextTryNum, $callStart, \SoapFault $fault) {
     protected function switchSoapContextFailoverOnFault($method, $nextTryNum, $callStart, $errorCode) {
         $callDuration = round(1000 * (microtime(true) - $callStart));
         if($this->useSercicesEndpointsFailover($method) &&
@@ -673,15 +684,12 @@ class WebserviceClient
         return false;
     }
 
-
-
     /**
      * @deprecated Not used
-     *
      * @param $method
      * @param $nextTryNum
      * @param $callStart
-     * @param \SoapFault $fault
+     * @param \Exception $e
      * @return bool
      */
     protected function switchSoapContextFailoverOnException($method, $nextTryNum, $callStart, \Exception $e) {
@@ -747,8 +755,7 @@ class WebserviceClient
     }
 
     /**
-     * @param string $key
-     * @return array|false|mixed
+     * @return array
      */
     public function retrieveSoapLastContent()
     {

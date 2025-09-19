@@ -22,8 +22,7 @@ class SoapVarFactory
     /**
      * @param $elementKey
      * @param $data
-     * @param $default
-     * @return \Payline\Objects\AbstractObject|null
+     * @return array|object|\SoapVar|null
      */
     public function create($elementKey, $data) {
         $paylineObject = $this->createObject($elementKey, !empty($data[$elementKey]) ? $data[$elementKey] : null);
@@ -36,7 +35,7 @@ class SoapVarFactory
      * @param $elementKey
      * @param $data
      * @param $default
-     * @return \Payline\Objects\AbstractObject|null
+     * @return object|array|null
      */
     public function createObject($elementKey, $data=null, $baseClassname=null) {
         $newObject = null;
@@ -98,7 +97,7 @@ class SoapVarFactory
 
     /**
      * @param $newObject
-     * @param $elementKey
+     * @param $varType
      * @return \SoapVar
      */
     protected function getSoapVar($newObject, $varType) {
@@ -107,8 +106,8 @@ class SoapVarFactory
 
     /**
      * @param array $array
-     * @param \Payline\Objects\AbstractObject $object
-     * @return \Payline\Objects\AbstractObject
+     * @param object $object
+     * @return object|null
      */
     protected function fillObject(array $array, $object) {
         if ($array) {
@@ -127,7 +126,7 @@ class SoapVarFactory
     }
 
     /**
-     * @param \Payline\Objects\AbstractObject $object
+     * @param object $object
      * @param $property
      * @return bool
      */
